@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "Psychup Speedup",
+  "version": "0.1.0",
+  "description": "Soleil, planètes et train pour régler la vitesse des vidéos et audios. Module Psychup autonome.",
+  "minimum_chrome_version": "114",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://*.crunchyroll.com/*"
+  ],
+  "action": {
+    "default_title": "Psychup Speedup — régler cette page"
+  },
+  "background": {
+    "service_worker": "worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://*.crunchyroll.com/*"
+      ],
+      "js": [
+        "modules/speedup/engine.js",
+        "modules/speedup/widget.js"
+      ],
+      "all_frames": true,
+      "match_about_blank": true,
+      "run_at": "document_idle"
+    }
+  ],
+  "incognito": "not_allowed"
+}

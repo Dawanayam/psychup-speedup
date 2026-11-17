@@ -1,0 +1,16 @@
+{
+  "name": "psychup-speedup",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Standalone solar media-speed controller from Psychup",
+  "license": "MIT",
+  "scripts": {
+    "test": "node scripts/check.cjs",
+    "test:browser": "node tests/browser.cjs",
+    "package": "node scripts/package.cjs",
+    "sync:psychup": "node scripts/sync.cjs"
+  },
+  "devDependencies": {
+    "puppeteer": "25.18.1"
+  }
+}

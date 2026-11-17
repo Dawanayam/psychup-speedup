@@ -1,0 +1,13 @@
+{
+  "project": "Psychup Workspace",
+  "module": "modules/speedup",
+  "direction": "Psychup -> standalone; explicit sync only",
+  "sha256": {
+    "engine.js": "4e681e9696fb423c44838c5830ef19ad3a1979820217cda1100e26a52ad754d0",
+    "controller.js": "675d2bd727848da0ae5497cf81eae5a855bad730940700ba8e6dfe0e133b9e2b",
+    "widget.js": "755a861eca19e7c820e1c52c1b084cb5c05c7d0a893742e3eb20cd573085a939",
+    "app.js": "e69846f231d879a278f573804fb16dbd2f0b6d81e5e763d7104e62558db9f689",
+    "index.html": "53e05574d91add12b73f71e02844188f8fd232ac1225cda9d1d0cd362c63f071",
+    "style.css": "828f40aefbb401034d0c3b2f12d392f459cbf29be77edc45e0d4dda299f44ef0"
+  }
+}

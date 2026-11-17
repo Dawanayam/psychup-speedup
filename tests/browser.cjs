@@ -1,0 +1,43 @@
+const p=require('puppeteer'),path=require('node:path'),os=require('node:os'),fs=require('node:fs'),assert=require('node:assert/strict');
+(async()=>{
+ let browser;
+ try{
+ const root=path.resolve(__dirname,'../extension');
+ browser=await p.launch({headless:true,timeout:30000,userDataDir:fs.mkdtempSync(path.join(os.tmpdir(),'speedup-test-')),args:['--no-sandbox','--disable-gpu','--disable-extensions-except='+root,'--load-extension='+root],ignoreDefaultArgs:['--disable-extensions']});
+ const target=await browser.waitForTarget(t=>t.type()==='service_worker'&&t.url().endsWith('/worker.js'));
+ const base=target.url().replace(/worker.js$/,'');
+ const source=await browser.newPage();
+ await source.setRequestInterception(true);
+ source.on('request',r=>r.respond({status:200,contentType:'text/html',body:'<!doctype html><style>body{background:#203340}video{width:640px;height:360px}</style><title>Speedup fixture</title><video></video><audio></audio>'}));
+ await source.goto('https://www.youtube.com/watch?v=fixture');
+ await source.waitForSelector('#psychup-speedup-widget');
+ assert.equal(await source.$eval('video',v=>v.playbackRate),1);
+ await source.evaluate(()=>document.querySelector('#psychup-speedup-widget').shadowRoot.querySelector('[data-rate="2"]').click());
+ assert.equal(await source.$eval('video',v=>v.playbackRate),2);
+ assert.equal(await source.$eval('audio',v=>v.playbackRate),2);
+ await source.evaluate(()=>document.querySelector('#psychup-speedup-widget').shadowRoot.querySelector('#toggle').click());
+ assert.equal(await source.$eval('video',v=>v.playbackRate),1);
+ const page=await browser.newPage();await page.goto(base+'modules/speedup/index.html');
+ const tabId=await page.evaluate(async()=> (await chrome.tabs.query({url:'https://www.youtube.com/watch?v=fixture'}))[0].id);
+ await page.goto(base+'modules/speedup/index.html?sourceTab='+tabId);
+ await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('2 média'));
+ await page.click('[data-rate="1.75"]');
+ await source.waitForFunction(()=>document.querySelector('video').playbackRate===1.75,{polling:100});
+ await page.click('#stop');
+ await source.waitForFunction(()=>document.querySelector('video').playbackRate===1,{polling:100});
+ await page.setViewport({width:320,height:850});
+ assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ await source.goto('https://www.youtube.com/watch?v=changed');
+ await page.click('#apply');await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('source a changé'));
+ await source.bringToFront();
+ const pos=await source.evaluate(()=>{const r=document.querySelector('#psychup-speedup-widget').shadowRoot.querySelector('#toggle').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};});
+ await source.mouse.move(pos.x,pos.y);
+ await source.waitForFunction(()=>!document.querySelector('#psychup-speedup-widget').shadowRoot.querySelector('#panel').hidden);
+ await new Promise(r=>setTimeout(r,1000));
+ const centered=await source.evaluate(()=>{const s=document.querySelector('#psychup-speedup-widget').shadowRoot;const sun=s.querySelector('#toggle').getBoundingClientRect();const planets=[...s.querySelectorAll('[data-rate]')].filter(b=>b.dataset.rate!=='1').map(b=>b.getBoundingClientRect());return {sx:sun.x+sun.width/2,sy:sun.y+sun.height/2,x:planets.reduce((a,r)=>a+r.x+r.width/2,0)/8,y:planets.reduce((a,r)=>a+r.y+r.height/2,0)/8};});
+ assert(Math.abs(centered.sx-centered.x)<2&&Math.abs(centered.sy-centered.y)<2,'planets centered around sun');
+ fs.mkdirSync(path.resolve(__dirname,'../artifacts'),{recursive:true});
+ await source.screenshot({path:path.resolve(__dirname,'../artifacts/solar-preview.png')});
+ console.log('PASS standalone extension:',await browser.version(),process.platform,'widget, video/audio, dashboard source, reset, 320px, navigation guard, hover. Synthetic pages only.');
+ }finally{await browser?.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});
