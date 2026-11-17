@@ -6,9 +6,9 @@ const source=path.resolve(args.find(a=>a!=='--check')||path.join(root,'..','psyc
 const names=['engine.js','controller.js','widget.js','app.js','index.html','style.css'];
 const hashes={};
 for(const name of names){
- const data=fs.readFileSync(path.join(source,name));
+ const data=Buffer.from(fs.readFileSync(path.join(source,name),'utf8').replace(/\r\n/g,'\n'));
  const target=path.join(root,'extension','modules','speedup',name);
- if(check){if(!fs.existsSync(target)||!fs.readFileSync(target).equals(data))throw Error('Drift: '+name);}
+ if(check){if(!fs.existsSync(target)||fs.readFileSync(target,'utf8').replace(/\r\n/g,'\n')!==data.toString())throw Error('Drift: '+name);}
  else{fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,data);}
  hashes[name]=crypto.createHash('sha256').update(data).digest('hex');
 }
